@@ -1,6 +1,7 @@
 {
-  "name": "ga",
-  "version": "0.0.1",
+  "name": "@astro-kits/google-analytics",
+  "version": "0.1.0",
+  "description": "Google Analytics integration for Astro with Partytown",
   "type": "module",
   "exports": {
     ".": "./index.ts"
@@ -10,13 +11,25 @@
     "index.ts"
   ],
   "keywords": [
-    "astro-component"
+    "astro",
+    "astro-component",
+    "google-analytics",
+    "partytown",
+    "analytics",
+    "performance"
   ],
-  "scripts": {},
-  "devDependencies": {
-    "astro": "^5.4.3"
+  "author": "HandyStudio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/handystudio/astro-google-analytics"
   },
+  "bugs": {
+    "url": "https://github.com/handystudio/astro-google-analytics/issues"
+  },
+  "homepage": "https://github.com/handystudio/astro-google-analytics#readme",
   "peerDependencies": {
+    "@astrojs/partytown": "^2.1.4",
     "astro": "^4.0.0 || ^5.0.0"
   }
 }

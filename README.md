@@ -1,35 +1,185 @@
-# Astro Starter Kit: Component Package
+# @astro-kits/google-analytics
 
-This is a template for an Astro component library. Use this template for writing components to use in multiple projects or publish to NPM.
+A performance-optimized Google Analytics integration for Astro that leverages Partytown to run analytics scripts in a web worker.
 
-```sh
-pnpm create astro@latest -- --template component
+[![npm version](https://img.shields.io/npm/v/@astro-kits/google-analytics.svg)](https://www.npmjs.com/package/@astro-kits/google-analytics)
+[![license](https://img.shields.io/npm/l/@astro-kits/google-analytics.svg)](https://github.com/yourusername/google-analytics/blob/main/LICENSE)
+
+## Features
+
+- 🚀 **Web Worker Powered**: Offloads Google Analytics to a web worker using Partytown
+- 🔄 **Simple Integration**: Drop-in component for any Astro project
+- 🔧 **Configurable**: Options for development/production behavior
+- 📦 **Lightweight**: Minimal implementation with no unnecessary features
+- ⚡ **Performance First**: Improves main thread performance
+- 🔐 **Environment Variables**: Automatically use GA ID from environment variables
+
+## Installation
+
+```bash
+# npm
+npm install @astro-kits/google-analytics @astrojs/partytown
+
+# yarn
+yarn add @astro-kits/google-analytics @astrojs/partytown
+
+# pnpm
+pnpm add @astro-kits/google-analytics @astrojs/partytown
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/non-html-pages)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/non-html-pages)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/component/devcontainer.json)
+## Setup
 
-## 🚀 Project Structure
+### 1. Configure Partytown in your Astro config
 
-Inside of your Astro project, you'll see the following folders and files:
+```js
+// astro.config.mjs
+import { defineConfig } from "astro/config";
+import partytown from "@astrojs/partytown";
 
-```text
-/
-├── index.ts
-├── src
-│   └── MyComponent.astro
-├── tsconfig.json
-├── package.json
+export default defineConfig({
+  integrations: [
+    partytown({
+      config: {
+        forward: ["dataLayer.push", "gtag"],
+      },
+    }),
+  ],
+});
 ```
 
-The `index.ts` file is the "entry point" for your package. Export your components in `index.ts` to make them importable from your package.
+### 2. Set up environment variables (optional)
 
-## 🧞 Commands
+Create a `.env` file in your project root:
 
-All commands are run from the root of the project, from a terminal:
+```
+GA_ID=G-XXXXXXXXXX
+```
 
-| Command       | Action                                                                                                                                                                                                                           |
-| :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm link`    | Registers this package locally. Run `pnpm link my-component-library` in an Astro project to install your components                                                                                                               |
-| `pnpm publish` | [Publishes](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages#publishing-unscoped-public-packages) this package to NPM. Requires you to be [logged in](https://docs.npmjs.com/cli/v8/commands/pnpm-adduser) |
+### 3. Import and use the component
+
+```astro
+---
+// src/layouts/Layout.astro
+import GoogleAnalytics from '@astro-kits/google-analytics';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Astro Site</title>
+
+    <!-- Add Google Analytics -->
+    <GoogleAnalytics />  <!-- Will use ID from environment variables -->
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+```
+
+## Configuration Options
+
+| Option       | Type      | Default     | Description                                                                                                       |
+| ------------ | --------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| `id`         | `string`  | `undefined` | Your Google Analytics measurement ID (G-XXXXXXXXXX). If not provided, will use `GA_ID` from environment variables |
+| `partytown`  | `boolean` | `true`      | Whether to use Partytown to run GA in a web worker                                                                |
+| `production` | `boolean` | `true`      | Only load analytics in production environment                                                                     |
+
+## Examples
+
+### Basic Usage (with ID from environment variables)
+
+```astro
+<GoogleAnalytics />
+```
+
+### Explicitly Providing Measurement ID
+
+```astro
+<GoogleAnalytics id="G-XXXXXXXXXX" />
+```
+
+### Without Partytown (run on main thread)
+
+```astro
+<GoogleAnalytics partytown={false} />
+```
+
+### Load in Development Environment
+
+```astro
+<GoogleAnalytics production={false} />
+```
+
+## How It Works
+
+This component:
+
+1. Loads the Google Analytics gtag.js script
+2. Gets the GA ID from props or falls back to the `GA_ID` environment variable
+3. Initializes Google Analytics with the provided ID
+4. Uses Partytown to run the scripts in a web worker (by default)
+5. Conditionally loads only in production environments (by default)
+
+## Component Implementation
+
+The component automatically checks for the Google Analytics ID in this order:
+
+1. From the `id` prop if provided
+2. From the `GA_ID` environment variable
+3. Logs a warning if no ID is found
+
+```astro
+---
+// Example of component implementation
+export interface Props {
+  id?: string; // Google Analytics measurement ID (G-XXXXXXXXXX)
+  partytown?: boolean; // Whether to use Partytown
+  production?: boolean; // Only load in production environment
+}
+
+// Get the Google Analytics ID from the .env file
+const GA_ID = import.meta.env.GA_ID;
+
+const {
+  id = GA_ID,
+  partytown = true,
+  production = true
+} = Astro.props;
+
+// Component logic...
+---
+```
+
+## Performance Benefits
+
+By running Google Analytics in a web worker:
+
+- Reduces main thread execution time
+- Improves page load performance
+- Reduces impact on Core Web Vitals
+- Better user experience with less main thread blocking
+
+## Browser Compatibility
+
+This component is compatible with all modern browsers. Partytown provides fallbacks for browsers that don't support web workers.
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Credits
+
+- [Astro](https://astro.build)
+- [Partytown](https://partytown.builder.io)
